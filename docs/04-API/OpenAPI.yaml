@@ -1,0 +1,420 @@
+openapi: 3.0.3
+info:
+  title: BabyLog API
+  version: 0.0.1
+  description: Private family baby logging API. Auth via Family Token (Bearer).
+
+servers:
+  - url: http://localhost:8787
+    description: Local dev (wrangler dev)
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+
+  /families:
+    post:
+      summary: Create family and get token
+      operationId: createFamily
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFamilyRequest"
+      responses:
+        "200":
+          description: Family created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateFamilyResponse"
+
+  /babies:
+    get:
+      summary: List babies
+      operationId: listBabies
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of babies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Baby"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create baby
+      operationId: createBaby
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBabyRequest"
+      responses:
+        "200":
+          description: Baby created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Baby"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /babies/{babyId}:
+    parameters:
+      - name: babyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      summary: Update baby
+      operationId: updateBaby
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBabyRequest"
+      responses:
+        "200":
+          description: Baby updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Baby"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Delete baby
+      operationId: deleteBaby
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /events:
+    post:
+      summary: Create event (idempotent on id)
+      operationId: createEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+      responses:
+        "200":
+          description: Event created or existing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Baby not found
+    get:
+      summary: List events
+      operationId: listEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: babyId
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: type
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [feed, poop, weight, vaccine, sleep, diaper, solid]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Events and optional next cursor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEventsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /events/{eventId}:
+    parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      summary: Update event
+      operationId: updateEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventRequest"
+      responses:
+        "200":
+          description: Event updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Delete event
+      operationId: deleteEvent
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /stats/feeds:
+    get:
+      summary: Feed stats (stub in v0.1)
+      operationId: getStatsFeeds
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: babyId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: days
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Placeholder
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feeds: { type: array, items: {} }
+                  totalMl: { type: number }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /stats/weight:
+    get:
+      summary: Weight stats (stub in v0.1)
+      operationId: getStatsWeight
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: babyId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: days
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Placeholder
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  points: { type: array }
+                  latestKg: { type: number, nullable: true }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /stats/sleep:
+    get:
+      summary: Sleep stats (stub in v0.1)
+      operationId: getStatsSleep
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: babyId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: days
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Placeholder
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions: { type: array }
+                  totalMinutes: { type: number }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+      description: Family token from POST /families
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
+    BadRequest:
+      description: Invalid request body
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
+
+  schemas:
+    Baby:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        familyId: { type: string, format: uuid }
+        name: { type: string }
+        birthDate: { type: string, format: date }
+        createdAt: { type: string, format: date-time }
+    CreateFamilyRequest:
+      type: object
+      properties:
+        name: { type: string }
+    CreateFamilyResponse:
+      type: object
+      properties:
+        familyId: { type: string, format: uuid }
+        token: { type: string }
+        name: { type: string, nullable: true }
+    CreateBabyRequest:
+      type: object
+      required: [name, birthDate]
+      properties:
+        name: { type: string }
+        birthDate: { type: string, format: date }
+    UpdateBabyRequest:
+      type: object
+      properties:
+        name: { type: string }
+        birthDate: { type: string, format: date }
+    Event:
+      type: object
+      properties:
+        id: { type: string }
+        familyId: { type: string }
+        babyId: { type: string }
+        eventType: { type: string, enum: [feed, poop, weight, vaccine, sleep, diaper, solid] }
+        eventTime: { type: string, format: date-time }
+        payload: {}
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CreateEventRequest:
+      type: object
+      required: [id, babyId, eventType, eventTime]
+      properties:
+        id: { type: string }
+        babyId: { type: string, format: uuid }
+        eventType: { type: string, enum: [feed, poop, weight, vaccine, sleep, diaper, solid] }
+        eventTime: { type: string, format: date-time }
+        payload: {}
+    UpdateEventRequest:
+      type: object
+      properties:
+        eventTime: { type: string, format: date-time }
+        payload: {}
+    ListEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+        nextCursor: { type: string, nullable: true }

@@ -1,0 +1,72 @@
+appId: com.anonymous.mobile
+name: "Auth - Register new family"
+---
+
+# Reset backend data
+- runScript:
+    file: ../../../../scripts/e2e-helpers.js
+    env:
+      ACTION: reset
+
+# Restart app
+- launchApp
+
+# Wait for app to finish loading (either Welcome or Home will appear)
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# If a previous test left a token, we end up on Home — logout first
+- runFlow:
+    when:
+      visible:
+        id: "home.screen"
+    file: ../shared/do-logout.yaml
+
+# Now we should be on Welcome
+- extendedWaitUntil:
+    visible:
+      id: "welcome.screen"
+    timeout: 15000
+
+# Tap register button
+- tapOn:
+    id: "welcome.registerButton"
+    retryTapIfNoChange: true
+
+# Wait for Register screen to appear after navigation animation
+- extendedWaitUntil:
+    visible: "创建家庭"
+    timeout: 15000
+
+# Enter a family name
+- tapOn:
+    id: "register.nameInput"
+- inputText: "E2E测试家庭"
+
+# Tap submit
+- tapOn:
+    id: "register.submitButton"
+    retryTapIfNoChange: true
+
+# Should see success screen with token
+- extendedWaitUntil:
+    visible: "家庭已创建"
+    timeout: 15000
+- assertVisible:
+    id: "register.tokenText"
+
+# Copy the token
+- tapOn:
+    id: "register.copyButton"
+
+# Enter the app
+- tapOn:
+    id: "register.enterAppButton"
+    retryTapIfNoChange: true
+
+# Should be on Home screen
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000
+- assertVisible: "今日"

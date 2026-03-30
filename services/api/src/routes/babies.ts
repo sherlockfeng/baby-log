@@ -1,16 +1,25 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import * as db from "../db/queries";
 
-export async function getBabies(familyId: string, env: { DB: D1Database }): Promise<Response> {
-  const rows = await db.getBabies(env.DB, familyId);
-  const babies = rows.map((r) => ({
+function mapBabyRow(r: db.BabyRow) {
+  return {
     id: r.id,
     familyId: r.family_id,
     name: r.name,
     birthDate: r.birth_date,
+    gender: r.gender ?? undefined,
+    heightCm: r.height_cm ?? undefined,
+    bloodType: r.blood_type ?? undefined,
+    allergies: r.allergies ?? undefined,
+    avatarUrl: r.avatar_url ?? undefined,
+    notes: r.notes ?? undefined,
     createdAt: r.created_at,
-  }));
-  return Response.json(babies);
+  };
+}
+
+export async function getBabies(familyId: string, env: { DB: D1Database }): Promise<Response> {
+  const rows = await db.getBabies(env.DB, familyId);
+  return Response.json(rows.map(mapBabyRow));
 }
 
 export async function postBabies(request: Request, familyId: string, env: { DB: D1Database }): Promise<Response> {
@@ -45,33 +54,29 @@ export async function patchBaby(
 ): Promise<Response> {
   const existing = await db.getBaby(env.DB, familyId, babyId);
   if (!existing) return Response.json({ error: "Not found" }, { status: 404 });
-  let body: { name?: string; birthDate?: string } = {};
+  let body: Record<string, unknown> = {};
   try {
-    body = (await request.json()) as { name?: string; birthDate?: string };
+    body = (await request.json()) as Record<string, unknown>;
   } catch {
     return Response.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const updates: { name?: string; birth_date?: string } = {};
-  if (body.name !== undefined) updates.name = body.name;
-  if (body.birthDate !== undefined) updates.birth_date = body.birthDate;
+  const fieldMap: Record<string, string> = {
+    name: "name", birthDate: "birth_date", gender: "gender",
+    heightCm: "height_cm", bloodType: "blood_type", allergies: "allergies",
+    avatarUrl: "avatar_url", notes: "notes",
+  };
+  const updates: Record<string, string | number | null> = {};
+  for (const [apiField, dbCol] of Object.entries(fieldMap)) {
+    if (body[apiField] !== undefined) {
+      updates[dbCol] = body[apiField] as string | number | null;
+    }
+  }
   if (Object.keys(updates).length === 0) {
-    return Response.json({
-      id: existing.id,
-      familyId: existing.family_id,
-      name: existing.name,
-      birthDate: existing.birth_date,
-      createdAt: existing.created_at,
-    });
+    return Response.json(mapBabyRow(existing));
   }
   await db.updateBaby(env.DB, familyId, babyId, updates);
   const updated = await db.getBaby(env.DB, familyId, babyId);
-  return Response.json({
-    id: updated!.id,
-    familyId: updated!.family_id,
-    name: updated!.name,
-    birthDate: updated!.birth_date,
-    createdAt: updated!.created_at,
-  });
+  return Response.json(mapBabyRow(updated!));
 }
 
 export async function deleteBaby(familyId: string, babyId: string, env: { DB: D1Database }): Promise<Response> {

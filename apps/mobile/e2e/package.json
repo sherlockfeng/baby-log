@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "playwright test --config playwright.config.ts",
+    "test:headed": "playwright test --config playwright.config.ts --headed",
+    "gallery": "npx tsx generate-gallery.ts",
+    "test:flows": "playwright test --config playwright.config.ts && npx tsx generate-gallery.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "tsx": "latest"
+  }
+}

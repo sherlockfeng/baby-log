@@ -1,0 +1,51 @@
+appId: com.anonymous.mobile
+name: "Auth - Login with valid token"
+---
+
+# Seed a known family
+- runScript:
+    file: ../../../../scripts/e2e-helpers.js
+    env:
+      ACTION: seed-family
+
+# Restart app
+- launchApp
+
+# Wait for app to finish loading (either Welcome or Home will appear)
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# If a previous test left a token, we end up on Home — logout first
+- runFlow:
+    when:
+      visible:
+        id: "home.screen"
+    file: ../shared/do-logout.yaml
+
+# Now we should be on Welcome
+- extendedWaitUntil:
+    visible:
+      id: "welcome.screen"
+    timeout: 15000
+
+# Go to Login
+- tapOn:
+    id: "welcome.loginButton"
+- assertVisible:
+    id: "login.screen"
+
+# Enter the seeded test token
+- tapOn:
+    id: "login.tokenInput"
+- inputText: "e2e-test-token-valid-00000000"
+
+# Tap login
+- tapOn:
+    id: "login.submitButton"
+
+# Should navigate to Home
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000
+- assertVisible: "今日"

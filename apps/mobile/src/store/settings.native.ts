@@ -2,7 +2,7 @@ import * as SecureStore from "expo-secure-store";
 
 const FACEID_ENABLED_KEY = "babylog_faceid_enabled";
 const LOCK_LAST_UNLOCK_KEY = "babylog_lock_last_unlock";
-const GRACE_MS = 60 * 1000; // 1 minute
+const GRACE_MS = 60 * 1000;
 
 export async function getFaceIdEnabled(): Promise<boolean> {
   const v = await SecureStore.getItemAsync(FACEID_ENABLED_KEY);

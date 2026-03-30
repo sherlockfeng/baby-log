@@ -7,3 +7,16 @@ compatibility_date = "2024-11-01"
 binding = "DB"
 database_name = "babylog"
 database_id = "9d0c11ae-77cc-46fb-a4cd-61411c0633bd"
+
+# R2: photo storage (run `npx wrangler r2 bucket create babylog-photos` for production)
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "babylog-photos"
+
+# E2E test helpers are enabled in local dev only
+[vars]
+E2E_ENABLED = "1"
+
+# Production overrides: disable e2e endpoints
+[env.production.vars]
+E2E_ENABLED = "0"

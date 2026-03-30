@@ -11,17 +11,26 @@ export async function createFamily(db: D1Database, id: string, name: string | nu
     .run();
 }
 
-export async function getBabies(db: D1Database, familyId: string): Promise<Array<{ id: string; family_id: string; name: string; birth_date: string; created_at: string }>> {
-  const { results } = await db.prepare("SELECT id, family_id, name, birth_date, created_at FROM babies WHERE family_id = ? ORDER BY created_at DESC")
+export interface BabyRow {
+  id: string; family_id: string; name: string; birth_date: string;
+  gender: string | null; height_cm: number | null; blood_type: string | null;
+  allergies: string | null; avatar_url: string | null; notes: string | null;
+  created_at: string;
+}
+
+const BABY_COLS = "id, family_id, name, birth_date, gender, height_cm, blood_type, allergies, avatar_url, notes, created_at";
+
+export async function getBabies(db: D1Database, familyId: string): Promise<BabyRow[]> {
+  const { results } = await db.prepare(`SELECT ${BABY_COLS} FROM babies WHERE family_id = ? ORDER BY created_at DESC`)
     .bind(familyId)
-    .all<{ id: string; family_id: string; name: string; birth_date: string; created_at: string }>();
+    .all<BabyRow>();
   return results ?? [];
 }
 
 export async function getBaby(db: D1Database, familyId: string, babyId: string) {
-  return db.prepare("SELECT id, family_id, name, birth_date, created_at FROM babies WHERE family_id = ? AND id = ?")
+  return db.prepare(`SELECT ${BABY_COLS} FROM babies WHERE family_id = ? AND id = ?`)
     .bind(familyId, babyId)
-    .first<{ id: string; family_id: string; name: string; birth_date: string; created_at: string }>();
+    .first<BabyRow>();
 }
 
 export async function createBaby(db: D1Database, id: string, familyId: string, name: string, birthDate: string): Promise<void> {
@@ -30,18 +39,32 @@ export async function createBaby(db: D1Database, id: string, familyId: string, n
     .run();
 }
 
-export async function updateBaby(db: D1Database, familyId: string, babyId: string, updates: { name?: string; birth_date?: string }): Promise<boolean> {
-  if (updates.name !== undefined) {
-    await db.prepare("UPDATE babies SET name = ? WHERE family_id = ? AND id = ?").bind(updates.name, familyId, babyId).run();
+export async function updateBaby(
+  db: D1Database,
+  familyId: string,
+  babyId: string,
+  updates: Record<string, string | number | null | undefined>,
+): Promise<boolean> {
+  const setClauses: string[] = [];
+  const bindings: (string | number | null)[] = [];
+  for (const [col, val] of Object.entries(updates)) {
+    if (val !== undefined) {
+      setClauses.push(`${col} = ?`);
+      bindings.push(val as string | number | null);
+    }
   }
-  if (updates.birth_date !== undefined) {
-    await db.prepare("UPDATE babies SET birth_date = ? WHERE family_id = ? AND id = ?").bind(updates.birth_date, familyId, babyId).run();
+  if (setClauses.length > 0) {
+    bindings.push(familyId, babyId);
+    await db.prepare(`UPDATE babies SET ${setClauses.join(", ")} WHERE family_id = ? AND id = ?`)
+      .bind(...bindings)
+      .run();
   }
   const row = await db.prepare("SELECT 1 FROM babies WHERE family_id = ? AND id = ?").bind(familyId, babyId).first();
   return row != null;
 }
 
 export async function deleteBaby(db: D1Database, familyId: string, babyId: string): Promise<boolean> {
+  await db.prepare("DELETE FROM events WHERE family_id = ? AND baby_id = ?").bind(familyId, babyId).run();
   const r = await db.prepare("DELETE FROM babies WHERE family_id = ? AND id = ?").bind(familyId, babyId).run();
   return (r.meta.changes ?? 0) > 0;
 }
@@ -78,7 +101,17 @@ export async function listEvents(
     sql += " AND event_type IN (" + opts.types.map(() => "?").join(",") + ")";
     bindings.push(...opts.types);
   }
-  sql += " ORDER BY event_time DESC LIMIT ?";
+  if (opts.cursor) {
+    const cursorRow = await db
+      .prepare("SELECT event_time FROM events WHERE family_id = ? AND id = ?")
+      .bind(familyId, opts.cursor)
+      .first<{ event_time: string }>();
+    if (cursorRow) {
+      sql += " AND (event_time < ? OR (event_time = ? AND id < ?))";
+      bindings.push(cursorRow.event_time, cursorRow.event_time, opts.cursor);
+    }
+  }
+  sql += " ORDER BY event_time DESC, id DESC LIMIT ?";
   bindings.push(limit + 1);
   const { results } = await db.prepare(sql).bind(...bindings).all();
   const rows = (results ?? []) as Array<{ id: string; family_id: string; baby_id: string; event_type: string; event_time: string; payload: string; created_at: string; updated_at: string }>;

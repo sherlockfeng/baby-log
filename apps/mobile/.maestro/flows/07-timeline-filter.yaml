@@ -1,0 +1,74 @@
+appId: com.anonymous.mobile
+name: "Timeline - Filter by baby"
+---
+
+# Seed family with 2 babies and events for each
+- runScript:
+    file: ../../../../scripts/e2e-helpers.js
+    env:
+      ACTION: seed-timeline-filter
+
+# Restart app
+- launchApp
+
+# Wait for app to finish loading (either Welcome or Home will appear)
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# If a previous test left a token, we end up on Home — logout first
+- runFlow:
+    when:
+      visible:
+        id: "home.screen"
+    file: ../shared/do-logout.yaml
+
+# Now we should be on Welcome
+- extendedWaitUntil:
+    visible:
+      id: "welcome.screen"
+    timeout: 15000
+
+# Login with seeded token
+- tapOn:
+    id: "welcome.loginButton"
+- tapOn:
+    id: "login.tokenInput"
+- inputText: "e2e-test-token-valid-00000000"
+- tapOn:
+    id: "login.submitButton"
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000
+
+# Go to Timeline
+- tapOn:
+    id: "home.timelineCard"
+- extendedWaitUntil:
+    visible:
+      id: "timeline.screen"
+    timeout: 10000
+
+# "全部" should be default — both events visible
+- assertVisible: "喂奶"
+- assertVisible: "睡眠"
+
+# Filter to baby A
+- tapOn: "宝宝A"
+- extendedWaitUntil:
+    notVisible: "睡眠"
+    timeout: 10000
+- assertVisible: "喂奶"
+
+# Switch to baby B
+- tapOn: "宝宝B"
+- extendedWaitUntil:
+    notVisible: "喂奶"
+    timeout: 10000
+- assertVisible: "睡眠"
+
+# Back to all
+- tapOn:
+    id: "timeline.filterAll"
+- assertVisible: "喂奶"
+- assertVisible: "睡眠"

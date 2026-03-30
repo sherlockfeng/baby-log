@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import {
   Button,
-  KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { KeyboardAvoidingWrapper } from "../components/KeyboardAvoidingWrapper";
 import { setStoredToken } from "../store/token";
 import { apiRequest } from "../api/client";
 
@@ -46,10 +45,7 @@ export function SetupScreen({ onDone, navigation }: SetupScreenProps) {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
+    <KeyboardAvoidingWrapper style={styles.container}>
       <View style={styles.inner}>
         <Text style={styles.title}>Setup</Text>
         <Text style={styles.helper}>Paste your family token to sync data.</Text>
@@ -68,7 +64,7 @@ export function SetupScreen({ onDone, navigation }: SetupScreenProps) {
           <Button title="Create new family" onPress={() => navigation.navigate("CreateFamily")} />
         ) : null}
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardAvoidingWrapper>
   );
 }
 

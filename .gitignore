@@ -7,3 +7,8 @@ dist
 coverage
 *.log
 common/temp
+assets/napper-screenshots
+apps/mobile/e2e/screenshots
+apps/mobile/test-results
+services/api/.wrangler/state
+services/api/.wrangler/tmp

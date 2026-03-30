@@ -1,0 +1,50 @@
+appId: com.anonymous.mobile
+name: "Auth - Login with invalid token"
+---
+
+# Reset to ensure no matching family
+- runScript:
+    file: ../../../../scripts/e2e-helpers.js
+    env:
+      ACTION: reset
+
+# Restart app
+- launchApp
+
+# Wait for app to finish loading (either Welcome or Home will appear)
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# If a previous test left a token, we end up on Home — logout first
+- runFlow:
+    when:
+      visible:
+        id: "home.screen"
+    file: ../shared/do-logout.yaml
+
+# Now we should be on Welcome
+- extendedWaitUntil:
+    visible:
+      id: "welcome.screen"
+    timeout: 15000
+
+# Go to Login
+- tapOn:
+    id: "welcome.loginButton"
+- assertVisible:
+    id: "login.screen"
+
+# Enter a bogus token
+- tapOn:
+    id: "login.tokenInput"
+- inputText: "invalid-token-does-not-exist"
+
+# Tap login
+- tapOn:
+    id: "login.submitButton"
+
+# Should see error message (either "Token 无效" or "网络错误")
+- extendedWaitUntil:
+    visible:
+      id: "login.error"
+    timeout: 15000

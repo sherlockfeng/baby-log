@@ -1,0 +1,23 @@
+---
+description: 写代码前必须阅读的关键文件索引
+alwaysApply: true
+---
+
+# 写代码前必读
+
+## 产品与设计
+1. `docs/01-PRD/PRD.md` — 产品愿景、用户画像、迭代路线图
+2. `docs/01-PRD/design-guidelines.md` — 产品设计原则、UX 规范、开发流程约定、新功能检查清单
+3. `docs/01-PRD/v0.3-family-circle.md` — 当前迭代 PRD（功能模块详细设计）
+
+## 架构与规范
+4. `docs/02-Architecture/overview.md` — 架构、编码规范（i18n / React Query / Toast / 平台拆分 / 主题等）
+5. `docs/05-UI-Style-Guide/index.md` — 视觉规范（色彩、字号、间距、组件样式）
+
+## 开发必备注册表
+6. `apps/mobile/src/testids.ts` — testID 注册表（新增 UI 元素必须先注册）
+7. `apps/mobile/src/i18n/locales/zh.json` — i18n key 注册表（新增文案必须先加 key）
+
+## 测试与执行
+8. `docs/08-E2E/mobile-e2e.md` — E2E 测试原则（选择器策略、种子数据、截图、已知坑）
+9. `todo.md` — 当前迭代执行清单（仅 v0.3 任务）

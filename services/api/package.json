@@ -6,7 +6,7 @@
     "@babylog/shared-types": "workspace:*"
   },
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --local --ip 0.0.0.0",
     "deploy": "wrangler deploy",
     "test": "echo \"No tests yet\""
   },

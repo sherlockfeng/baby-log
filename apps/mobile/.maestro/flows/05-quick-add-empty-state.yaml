@@ -1,0 +1,53 @@
+appId: com.anonymous.mobile
+name: "QuickAdd - Empty state when no babies"
+---
+
+# Seed family with NO babies
+- runScript:
+    file: ../../../../scripts/e2e-helpers.js
+    env:
+      ACTION: seed-family
+
+# Restart app
+- launchApp
+
+# Wait for app to finish loading (either Welcome or Home will appear)
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# If a previous test left a token, we end up on Home — logout first
+- runFlow:
+    when:
+      visible:
+        id: "home.screen"
+    file: ../shared/do-logout.yaml
+
+# Now we should be on Welcome
+- extendedWaitUntil:
+    visible:
+      id: "welcome.screen"
+    timeout: 15000
+
+# Login with seeded token
+- tapOn:
+    id: "welcome.loginButton"
+- tapOn:
+    id: "login.tokenInput"
+- inputText: "e2e-test-token-valid-00000000"
+- tapOn:
+    id: "login.submitButton"
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000
+
+# Navigate to QuickAdd
+- tapOn:
+    id: "home.quickAddCard"
+
+# Should see empty state message
+- extendedWaitUntil:
+    visible:
+      id: "quickAdd.emptyState"
+    timeout: 10000
+- assertVisible: "请先在设置中添加宝宝"

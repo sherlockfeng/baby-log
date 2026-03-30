@@ -1,0 +1,83 @@
+appId: com.anonymous.mobile
+name: "Settings - Add a baby"
+---
+
+# Seed a family
+- runScript:
+    file: ../../../../scripts/e2e-helpers.js
+    env:
+      ACTION: seed-family
+
+# Restart app
+- launchApp
+
+# Wait for app to finish loading (either Welcome or Home will appear)
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# If a previous test left a token, we end up on Home — logout first
+- runFlow:
+    when:
+      visible:
+        id: "home.screen"
+    file: ../shared/do-logout.yaml
+
+# Now we should be on Welcome
+- extendedWaitUntil:
+    visible:
+      id: "welcome.screen"
+    timeout: 15000
+
+# Login with seeded token
+- tapOn:
+    id: "welcome.loginButton"
+- tapOn:
+    id: "login.tokenInput"
+- inputText: "e2e-test-token-valid-00000000"
+- tapOn:
+    id: "login.submitButton"
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000
+
+# Home should show no baby hint
+- assertVisible: "尚未添加宝宝，请到设置中添加"
+
+# Navigate to Settings
+- tapOn:
+    id: "home.settingsCard"
+- extendedWaitUntil:
+    visible:
+      id: "settings.screen"
+    timeout: 10000
+
+# Fill in baby name
+- tapOn:
+    id: "settings.babyNameInput"
+- inputText: "小明"
+
+# Dismiss keyboard by tapping the section title area (safe zone)
+- tapOn: "添加宝宝"
+
+# Tap add
+- tapOn:
+    id: "settings.addBabyButton"
+
+# Wait for mutation to complete
+- extendedWaitUntil:
+    visible:
+      id: "settings.addBabyButton"
+    timeout: 10000
+
+# Go back to Home via the header back text
+- tapOn: "BabyLog"
+
+# Home should now show the baby name
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000
+- assertVisible:
+    id: "home.babyInfo"
+    text: ".*小明.*"

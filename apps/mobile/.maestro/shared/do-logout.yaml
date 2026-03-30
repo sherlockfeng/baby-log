@@ -1,0 +1,15 @@
+appId: com.anonymous.mobile
+name: "[Shared] Logout from Home"
+---
+- tapOn:
+    id: "home.settingsCard"
+- extendedWaitUntil:
+    visible:
+      id: "settings.logoutButton"
+    timeout: 10000
+- tapOn:
+    id: "settings.logoutButton"
+- extendedWaitUntil:
+    visible:
+      id: "welcome.screen"
+    timeout: 10000

@@ -1,0 +1,94 @@
+appId: com.anonymous.mobile
+name: "QuickAdd - Create a feed event"
+---
+
+# Seed family + baby
+- runScript:
+    file: ../../../../scripts/e2e-helpers.js
+    env:
+      ACTION: seed-family-with-baby
+
+# Restart app
+- launchApp
+
+# Wait for app to finish loading (either Welcome or Home will appear)
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# If a previous test left a token, we end up on Home — logout first
+- runFlow:
+    when:
+      visible:
+        id: "home.screen"
+    file: ../shared/do-logout.yaml
+
+# Now we should be on Welcome
+- extendedWaitUntil:
+    visible:
+      id: "welcome.screen"
+    timeout: 15000
+
+# Login with seeded token
+- tapOn:
+    id: "welcome.loginButton"
+- tapOn:
+    id: "login.tokenInput"
+- inputText: "e2e-test-token-valid-00000000"
+- tapOn:
+    id: "login.submitButton"
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 15000
+
+# Navigate to QuickAdd
+- tapOn:
+    id: "home.quickAddCard"
+- extendedWaitUntil:
+    visible:
+      id: "quickAdd.screen"
+    timeout: 10000
+
+# Select baby (use testID for reliable tap)
+- tapOn:
+    id: "quickAdd.babyChip.e2e-baby-a"
+
+# Select feed type
+- tapOn:
+    id: "quickAdd.typeChip.feed"
+
+# Fill in amount
+- tapOn:
+    id: "quickAdd.amountInput"
+- inputText: "120"
+- tapOn:
+    point: "50%,15%"
+
+# Submit
+- tapOn:
+    id: "quickAdd.submitButton"
+
+# Wait for submit to complete (form resets)
+- extendedWaitUntil:
+    notVisible:
+      id: "quickAdd.submitButton"
+    timeout: 20000
+
+# Go back to Home then to Timeline
+- tapOn: "BabyLog"
+- extendedWaitUntil:
+    visible:
+      id: "home.screen"
+    timeout: 10000
+- tapOn:
+    id: "home.timelineCard"
+
+# Timeline should show the feed event
+- extendedWaitUntil:
+    visible:
+      id: "timeline.screen"
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      text: ".*120 ml.*"
+    timeout: 15000

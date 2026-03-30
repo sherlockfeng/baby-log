@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import {
   Alert,
   Button,
-  KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { KeyboardAvoidingWrapper } from "../components/KeyboardAvoidingWrapper";
 import { apiJson } from "../api/client";
 import { setStoredToken } from "../store/token";
 
@@ -45,10 +44,7 @@ export function CreateFamilyScreen({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
+    <KeyboardAvoidingWrapper style={styles.container}>
       <View style={styles.inner}>
         <Text style={styles.title}>Create family</Text>
         <TextInput
@@ -60,7 +56,7 @@ export function CreateFamilyScreen({ onDone }: { onDone: () => void }) {
         />
         <Button title={loading ? "Creating…" : "Create"} onPress={handleCreate} disabled={loading} />
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardAvoidingWrapper>
   );
 }
 
